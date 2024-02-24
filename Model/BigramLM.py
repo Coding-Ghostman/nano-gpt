@@ -1,8 +1,9 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
+from Model.Head import Head
 
-from config.config import DEVICE
+from config.config import BLOCK_SIZE, DEVICE
 torch.manual_seed(42)
 
 
@@ -13,6 +14,10 @@ class BigramLanguageModel(nn.Module):
 
         self.token_embedding_table = nn.Embedding(vocab_size, n_embed)
         self.position_embedding_table = nn.Embedding(block_size, n_embed)
+
+        self.sa_head = Head(
+            n_embed=n_embed, block_size=block_size, head_size=n_embed)
+
         self.lm_head = nn.Linear(n_embed, vocab_size)
 
     def forward(self, idx, targets=None):
@@ -23,6 +28,7 @@ class BigramLanguageModel(nn.Module):
             torch.arange(T, device=DEVICE))
 
         x = token_embed+position_embed
+        x = self.sa_head(x)
 
         logits = self.lm_head(x)  # (B T vocab_size)
 
@@ -40,8 +46,9 @@ class BigramLanguageModel(nn.Module):
 
     def generate(self, idx, max_new_tokens):
         for _ in range(max_new_tokens):
+            idx_cond = idx[:, -BLOCK_SIZE:]
             # Get Predictions
-            logits, loss = self(idx)
+            logits, loss = self(idx_cond)
 
             # Focus only on the last time step
             logits = logits[:, -1, :]  # becomes B,C
