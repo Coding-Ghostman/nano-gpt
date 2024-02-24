@@ -1,7 +1,7 @@
 import torch
 import argparse
 from Model.BigramLM import BigramLanguageModel
-from config.config import BLOCK_SIZE, DEVICE, EVAL_INTERVAL, LEARNING_RATE, MAX_ITERS, N_EMBED
+from config.config import BLOCK_SIZE, DEVICE, DROPOUT, EVAL_INTERVAL, LEARNING_RATE, MAX_ITERS, N_EMBED, N_HEAD, N_LAYER
 from data.data import get_data, get_chars
 from utils.utils import decode, estimate_loss, get_batch
 
@@ -15,7 +15,7 @@ def train_and_test(train_mode):
     val_data = data[n:].to(device=DEVICE)
 
     model = BigramLanguageModel(
-        vocab_size=VOCAB_SIZE, block_size=BLOCK_SIZE, n_embed=N_EMBED)
+        vocab_size=VOCAB_SIZE, block_size=BLOCK_SIZE, n_embed=N_EMBED, n_head=N_HEAD, n_layer=N_LAYER, dropout=DROPOUT)
     model = model.to(DEVICE)
     optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE)
 
@@ -37,7 +37,7 @@ def train_and_test(train_mode):
 
     if train_mode == 'test':
         context = torch.zeros((1, 1), dtype=torch.long, device=DEVICE)
-        print(decode(model.generate(context, max_new_tokens=200)[0].tolist()))
+        print(decode(model.generate(context, max_new_tokens=500)[0].tolist()))
 
 
 if __name__ == "__main__":
