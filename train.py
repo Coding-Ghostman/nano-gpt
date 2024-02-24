@@ -1,9 +1,10 @@
 import torch
 import argparse
 from Model.BigramLM import BigramLanguageModel
-from config.config import DEVICE, EVAL_INTERVAL, LEARNING_RATE, MAX_ITERS
+from config.config import BLOCK_SIZE, DEVICE, EVAL_INTERVAL, LEARNING_RATE, MAX_ITERS, N_EMBED
 from data.data import get_data, get_chars
 from utils.utils import decode, estimate_loss, get_batch
+
 
 def train_and_test(train_mode):
     data = get_data()
@@ -13,7 +14,8 @@ def train_and_test(train_mode):
     train_data = data[:n].to(device=DEVICE)
     val_data = data[n:].to(device=DEVICE)
 
-    model = BigramLanguageModel(vocab_size=VOCAB_SIZE)
+    model = BigramLanguageModel(
+        vocab_size=VOCAB_SIZE, block_size=BLOCK_SIZE, n_embed=N_EMBED)
     model = model.to(DEVICE)
     optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE)
 
@@ -37,9 +39,12 @@ def train_and_test(train_mode):
         context = torch.zeros((1, 1), dtype=torch.long, device=DEVICE)
         print(decode(model.generate(context, max_new_tokens=200)[0].tolist()))
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Train or test the Bigram Language Model.')
-    parser.add_argument('--mode', choices=['train', 'test'], help='Select mode: train or test', required=True)
+    parser = argparse.ArgumentParser(
+        description='Train or test the Bigram Language Model.')
+    parser.add_argument(
+        '--mode', choices=['train', 'test'], help='Select mode: train or test', required=True)
     args = parser.parse_args()
 
     train_and_test(args.mode)
